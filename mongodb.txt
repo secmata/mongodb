@@ -1,0 +1,148 @@
+http://code.tutsplus.com/courses/learning-mongodb/lessons/introduction
+https://github.com/pyprism/cheatsheet/blob/master/mongo.md
+https://gist.github.com/ldong/441b1e3d97e42b08fc89/download#
+https://github.com/victormejia/learning-mongodb
+
+1 intro
+
+2 installation 
+
+3 tools
+
+run mongodb
+cd /mongo/bin
+mongo
+
+show dbs
+
+//importing JSON, CSV, OR TSV data
+mongoimport -d myApp -c users --file user_data.json
+//export data as JSON or CSV
+mongoexport -d myApp -c users --out user_data.json
+// creating a binary export
+mongodump
+// restoring a binary export
+mongorestore -d myApp ./dump/myApp
+//converting a binary export to JSON
+bsondump dump/myApp/users.bson > user.json
+
+http://bsonspec.org/
+BSON - binary JSON
+
+5 create
+
+> use bookmarks
+> db
+> db.links.count()
+> db.links.insert({ title: "Tuts+ Premium", url: "http://tutsplus.com", comment: "great video course!", tags: ["tutorials", "dev"], saved_on: new Date() });
+
+> var doc = {}
+> doc.title = "Nettuts+";
+> doc.url = "http://net.tutplus.com"
+> doc.comment = "best tutorials on the web"
+> doc.tags = ["tutorials", "web dev"];
+> doc.saved_on = new Date
+> doc.meta = {}
+> doc.meta.browser = "Google Chrome 24"
+> doc.meta.OS = "Mac OS 10.8.2"
+> doc
+> db.links.save(doc)
+> db.links.find() 
+> db.links.find.forEach(printjson); //prety
+
+6 objectids // BSON data type value - time was save, server process id, rando incrementing number
+> use bookmarks
+> db.links.insert({ _id : 3, name: "test" });
+> db.links.find()
+> db.links.find()[0]
+> db.links.find()[0]._id
+> db.links.find()[0]._id.getTimestamp()
+
+>new ObjectId
+>function counter(name){
+	var ret = db.counters.findAndModify({query: {_id:name}, update:{$inc : {next: 1}}, "new":true, upsert: true});
+	return ret.next;
+}
+> db.products.insert({ _id: counter("products"), name: "product 1" });
+> db.products.insert({ _id: counter("products"), name: "product 2" });
+> db.products.insert({ _id: counter("products"), name: "product 3" });
+> db.products.find()
+> db.counters.find(0)
+
+7 relations
+> db.links.find().pretty()
+> db.users.insert({ name: "Andrew" })
+> var a = db.users.findOne({ name: "Andrew" })
+> a
+> a._id
+> db.links.insert({ tittle: "Psdtuts+", url: "http://psd.tutsplus.com", userId: a._id });
+> db.links.find()[2]
+> link = db.links.find()[2]
+> db.users.findOne({ _id: link.userId });
+
+8 queries
+> mongo 127.0.0.1/bookmarks bookmarks.js //or 
+> mongo 127.0.0.1/bookmarks C:/Users/bem/Desktop/Learning_MongoDB/bookmarks.js
+
+> mongo bookmarks
+> db.links.find().pretty()
+> db.users.find().pretty()
+> db.users.find({ email: 'jhondoe@gmail.com' }).pretty()
+> db.users.find({ passwordHash: 'another_password_hash' }).pretty()
+> db.links.find({ favourites: 100 }).pretty()
+> db.users.findOne({ email: 'jhondoe@gmail.com' }).name
+> db.links.find({ favourites: 100 });
+> db.links.find({ favourites: 100 }, { title: 1, url: true });
+> db.links.find({ favourites: 100 }, { tags: 0 }).pretty();
+> db.links.find({ favourites: 100 }, { title: 1, url: 1, _id: 0 });
+> db.users.findOne({ 'name.first' : 'John' });
+> db.users.findOne({ 'name.first' : 'John' }, {'name.last': 1 });
+
+> var john = db.users.findOne({ 'name.first': 'John' });
+> db.links.find({ userId: john._id }, { title: 1, _id: 0 });
+
+9 queries 2
+> mongo bookmarks
+//grater than
+> db.links.find({ favourites: { $gt: 50 } }, { title: 1, favourites: 1, _id: 0 });  
+//less than
+> db.links.find({ favourites: { $lt: 150 } }, { title: 1, favourites: 1, _id: 0 });
+//less than, equal
+> db.links.find({ favourites: { $lte: 150 } }, { title: 1, favourites: 1, _id: 0 });
+//grater than, equal
+> db.links.find({ favourites: { $gte: 150 } }, { title: 1, favourites: 1, _id: 0 });
+//grater than, less than
+> db.links.find({ favourites: { $gt: 150, $lt: 300  } }, { title: 1, favourites: 1, _id: 0 });
+//grater than equal, less than equal
+> db.links.find({ favourites: { $gte: 150, $lte: 300  } }, { title: 1, favourites: 1, _id: 0 });
+
+//in
+> db.users.find({ 'name.first': { $in: ['John', 'Jane'] } }, { 'name.first': 1 });
+//not in
+> db.users.find({ 'name.first': { $in: ['John', 'Jane'] } }, { 'name.first': 1 });
+
+> db.links.find({ tags: { $in: ['marketplace', 'code'] } }, { title: 1, tags: 1, _id: 0 })
+> db.links.find({ tags: { $all: ['marketplace', 'code'] } }, { title: 1, tags: 1, _id: 0 })
+
+10 queries 3
+// not equal
+> db.links.find({ tags: { $ne: 'code' }});
+> db.links.find({ tags: { $ne: 'code' }}, { title: 1, tags: 1 });
+> db.users.find({ 'name.first': { $ne: "John" } })
+
+// or
+> db.users.find({ $or: [{ 'name.first': "John" }, {'name.last': "Wilson"}] }, {name: 1});
+// not or
+> db.users.find({ $nor: [{ 'name.first': "John" }, {'name.last': "Wilson"}] }, {name: 1});
+
+> db.users.insert({ name: { first: "John", last: "Jones" }});
+> db.users.find({ $or: [{ 'name.first': "John" }, {'name.last': "Wilson"}] }, { name: 1 });
+
+> db.users.find({ $and: [{ 'name.first': "John" }, { "name.last": "Jones" }] }); 
+
+
+mongoexport -d test -c test -o output.json
+
+mongoimport -d testbackup -c testbackup output.js
+
+
